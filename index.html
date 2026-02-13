@@ -18,8 +18,6 @@
         .btn-gold { background-color: var(--gold); color: white; transition: all 0.3s; }
         .btn-gold:hover { background-color: var(--navy); transform: translateY(-2px); }
         .event-title { background: var(--navy); color: #00d2ff; padding: 2px 10px; font-weight: 800; }
-        /* Animasi klik */
-        .card-active { ring: 3px solid var(--navy); transform: scale(1.02); }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -55,25 +53,25 @@
                         </div>
                     </div>
                     
-                    <div onclick="setFilter('ALL')" class="glass p-6 border-l-4 border-slate-600 cursor-pointer hover:bg-slate-50 transition-all active:scale-95">
-                        <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Total Peserta (Klik All)</p>
+                    <div onclick="setFilter('ALL')" class="glass p-6 border-l-4 border-slate-600 cursor-pointer hover:bg-white transition-all active:scale-95">
+                        <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Total Peserta</p>
                         <h2 id="count-all" class="text-4xl font-black text-slate-800 tracking-tighter">0</h2>
                     </div>
                     
-                    <div onclick="setFilter('HADIR')" class="glass p-6 border-l-4 border-amber-500 cursor-pointer hover:bg-slate-50 transition-all active:scale-95">
-                        <p class="text-amber-600 text-[10px] font-bold uppercase mb-1">Sudah Hadir (Filter)</p>
+                    <div onclick="setFilter('HADIR')" class="glass p-6 border-l-4 border-amber-500 cursor-pointer hover:bg-white transition-all active:scale-95">
+                        <p class="text-amber-600 text-[10px] font-bold uppercase mb-1">Sudah Hadir</p>
                         <h2 id="count-hadir" class="text-4xl font-black text-amber-600 tracking-tighter">0</h2>
                     </div>
 
-                    <div onclick="setFilter('PENDING')" class="glass p-6 border-l-4 border-rose-500 cursor-pointer hover:bg-slate-50 transition-all active:scale-95">
-                        <p class="text-rose-600 text-[10px] font-bold uppercase mb-1">Belum Hadir (Filter)</p>
+                    <div onclick="setFilter('PENDING')" class="glass p-6 border-l-4 border-rose-500 cursor-pointer hover:bg-white transition-all active:scale-95">
+                        <p class="text-rose-600 text-[10px] font-bold uppercase mb-1">Belum Hadir</p>
                         <h2 id="count-pending" class="text-4xl font-black text-rose-600 tracking-tighter">0</h2>
                     </div>
                 </div>
 
                 <div class="lg:col-span-3">
                     <div class="glass overflow-hidden bg-white/90">
-                        <div class="p-4 border-b border-slate-100 flex gap-4">
+                        <div class="p-4 border-b border-slate-100">
                             <input type="text" id="search" onkeyup="renderList()" placeholder="Cari nama atau kecamatan..." 
                                 class="bg-slate-50 border border-slate-200 rounded-xl px-6 py-3 w-full outline-none text-sm focus:ring-2 focus:ring-teal-500/20">
                         </div>
@@ -126,11 +124,11 @@
     <div id="qr-hidden" class="hidden"></div>
 
     <script>
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUZQPt5E_ft_yJGS1zwovwSHVg0FY-NUGoey4CGlKv_6Usbskgj-lS70PohEbmqEuEBQ/exec"; 
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzofsQwtuM4L0SVsNJdxOw7_otzCLKgPHXKkjLY_n1RpvB8trvDWRfYqMoS_VzBYlW9Zg/exec"; 
         
         let participants = [];
         let html5QrCode;
-        let currentFilter = "ALL"; // Variabel penyimpan filter aktif
+        let currentFilter = "ALL";
 
         async function loadData() {
             setSyncStatus("Connecting...", "bg-amber-400");
@@ -143,7 +141,6 @@
             } catch (e) { setSyncStatus("Offline", "bg-red-400"); }
         }
 
-        // Fungsi baru untuk set filter dari klik card
         function setFilter(status) {
             currentFilter = status;
             renderList();
@@ -155,14 +152,10 @@
             body.innerHTML = "";
             
             participants.filter(p => {
-                // Logika Search
                 const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
-                
-                // Logika Filter Card
                 let matchFilter = true;
                 if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
                 if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
-                
                 return matchSearch && matchFilter;
             }).forEach(p => {
                 const isHadir = p.STATUS === "HADIR";
@@ -181,34 +174,46 @@
             });
         }
 
-        // (Sisanya fungsi markAttendance, updateStats, dll tetep sama tapi gue update dikit di updateStats)
         async function markAttendance(id) {
             const index = participants.findIndex(p => p["NO."] == id);
             if (index === -1 || participants[index].STATUS === "HADIR") return;
+            
             const now = new Date();
             const fullDateTime = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
             const person = participants[index];
             person.STATUS = "HADIR";
             person.WAKTU = fullDateTime;
+            
             setSyncStatus("Processing...", "bg-blue-500");
-            addToRecent(person); renderList(); updateStats();
+            addToRecent(person); // Fungsi ini yang tadi ilang
+            renderList(); 
+            updateStats();
+
             try {
                 await fetch(SCRIPT_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ id: id }) });
                 setSyncStatus("Synced", "bg-emerald-500");
             } catch (e) { setSyncStatus("Sync Error", "bg-red-400"); }
         }
 
+        function addToRecent(person) {
+            const container = document.getElementById('recent-scans');
+            if (container.querySelector('div.italic')) container.innerHTML = "";
+            const el = document.createElement('div');
+            el.className = "glass p-4 flex justify-between items-center bg-white border-l-4 border-teal-500 shadow-sm animate-pulse";
+            el.innerHTML = `<div><p class="font-bold text-navy uppercase text-xs">${person.NAMA}</p><p class="text-[9px] text-teal-700 font-bold uppercase">${person.KECAMATAN}</p></div><div class="text-right text-[10px] font-black text-slate-400 uppercase">${person.WAKTU}</div>`;
+            container.prepend(el);
+            setTimeout(() => el.classList.remove('animate-pulse'), 1000);
+        }
+
         function updateStats() {
             const total = participants.length;
             const hadir = participants.filter(p => p.STATUS === "HADIR").length;
-            const pending = total - hadir;
-            
             document.getElementById('count-all').innerText = total;
             document.getElementById('count-hadir').innerText = hadir;
-            document.getElementById('count-pending').innerText = pending;
+            document.getElementById('count-pending').innerText = total - hadir;
         }
 
-        // (Fungsi UI lainnya tetep sama)
         function setSyncStatus(text, color) {
             document.getElementById('status-text').innerText = text;
             document.getElementById('indicator').className = `w-2 h-2 rounded-full ${color}`;
@@ -225,7 +230,6 @@
             } else if (html5QrCode) { html5QrCode.stop().catch(()=>{}); }
         }
 
-        // Copy Paste renderGenerator & generateAndDownloadTicket dari script lama lo disini...
         function renderGenerator() {
             const query = document.getElementById('searchGen').value.toLowerCase();
             const grid = document.getElementById('gen-grid');
