@@ -170,8 +170,10 @@
                     displayWaktu = dateObj.toLocaleString('id-ID', {
                         day: '2-digit',
                         month: '2-digit',
+                        year:'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
+                        hour12: false // Biar format 24 jam (misal 13:00 bukan 01:00 PM)
                     }).replace(/\./g, ':'); // Ganti titik jadi titik dua (khas Indonesia)
                 } else {
                     displayWaktu = p.WAKTU; // Balikin asal kalau bukan format tanggal
