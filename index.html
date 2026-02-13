@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muslimpreneur Talk | Event Dashboard</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        :root {
+            --navy: #0a1d37;
+            --teal: #1a5f60;
+            --gold: #b39a6a;
+        }
+
+        body { 
+            background: linear-gradient(135deg, #f8fafc 0%, #d1d5db 100%);
+            min-height: 100vh; 
+            color: var(--navy); 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .glass { 
+            background: rgba(255, 255, 255, 0.85); 
+            backdrop-filter: blur(15px); 
+            border: 1px solid rgba(255, 255, 255, 0.5); 
+            border-radius: 1.5rem; 
+            box-shadow: 0 8px 32px rgba(10, 29, 55, 0.1);
+        }
+
+        .active-tab { 
+            background: var(--navy);
+            color: white !important;
+            box-shadow: 0 8px 15px rgba(10, 29, 55, 0.3);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .btn-gold {
+            background-color: var(--gold);
+            color: white;
+            transition: all 0.3s;
+        }
+        .btn-gold:hover {
+            background-color: var(--navy);
+            transform: translateY(-2px);
+        }
+
+        /* Styling judul mirip di gambar */
+        .event-title {
+            background: var(--navy);
+            color: #00d2ff; /* Warna cyan di teks poster */
+            padding: 2px 10px;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
+            <div class="text-center md:text-left">
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">
+                    <span class="event-title">MUSLIMPRENEUR</span> <span class="italic font-light">Talk</span>
+                </h1>
+                <div class="flex items-center justify-center md:justify-start gap-2 mt-2">
+                    <span id="indicator" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                    <p id="status-text" class="text-[10px] uppercase tracking-widest text-slate-500 font-bold">System Standby</p>
+                </div>
+            </div>
+
+            <div class="bg-white/60 p-1.5 rounded-2xl border border-white flex gap-1 shadow-sm">
+                <button onclick="switchTab('list', this)" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold active-tab transition-all">DATABASE</button>
+                <button onclick="switchTab('scan', this)" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 transition-all">SCANNER</button>
+                <button onclick="switchTab('gen', this)" class="tab-btn px-5 py-2.5 rounded-xl text-xs font-bold text-slate-500 transition-all">AMBIL TIKET</button>
+            </div>
+        </header>
+
+        <section id="tab-list" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div class="lg:col-span-1 space-y-4">
+                    <div class="glass overflow-hidden">
+                        <img src="poster.jpg" alt="Poster Event" class="w-full h-auto object-cover">
+                        <div class="p-4 bg-navy text-white text-center" style="background: var(--navy);">
+                            <p class="text-[10px] font-bold tracking-widest uppercase opacity-70">Lokasi Event</p>
+                            <p class="text-xs font-bold">President Executive Club</p>
+                            <p class="text-[10px] mt-1 text-blue-300">Ahad, 15 Februari 2026</p>
+                        </div>
+                    </div>
+                    <div class="glass p-6 border-l-4 border-teal-600">
+                        <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Total Peserta</p>
+                        <h2 id="count-all" class="text-4xl font-black text-slate-800 tracking-tighter">0</h2>
+                    </div>
+                    <div class="glass p-6 border-l-4 border-amber-500">
+                        <p class="text-amber-600 text-[10px] font-bold uppercase mb-1">Sudah Hadir</p>
+                        <h2 id="count-hadir" class="text-4xl font-black text-amber-600 tracking-tighter">0</h2>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-3">
+                    <div class="glass overflow-hidden bg-white/90">
+                        <div class="p-4 border-b border-slate-100 flex gap-4">
+                            <input type="text" id="search" onkeyup="renderList()" placeholder="Cari nama atau kecamatan..." 
+                                class="bg-slate-50 border border-slate-200 rounded-xl px-6 py-3 w-full outline-none text-sm focus:ring-2 focus:ring-teal-500/20">
+                        </div>
+                        <div class="overflow-y-auto max-h-[60vh]">
+                            <table class="w-full text-left">
+                                <thead class="sticky top-0 bg-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                    <tr>
+                                        <th class="p-5">ID</th><th class="p-5">Nama Peserta</th><th class="p-5">Kecamatan</th><th class="p-5 text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="list-body" class="divide-y divide-slate-100"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-scan" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass p-6 bg-white border-2 border-white">
+                    <div id="reader" class="rounded-2xl overflow-hidden border-4 border-slate-100 bg-slate-50 aspect-square"></div>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <h3 class="px-2 font-black text-navy text-sm uppercase tracking-widest">Check-in Log</h3>
+                    <div id="recent-scans" class="space-y-3">
+                        <div class="glass p-10 text-center text-slate-400 italic text-sm">Menunggu scan pertama...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-gen" class="tab-content">
+            <div class="glass p-8 bg-white/90">
+                <div class="mb-8">
+                    <h3 class="font-black text-navy text-2xl uppercase">E-Ticket Generator</h3>
+                    <p class="text-sm text-slate-500">Cari nama lu buat download tiket resmi Muslimpreneur Talk.</p>
+                </div>
+                <input type="text" id="searchGen" onkeyup="renderGenerator()" placeholder="Ketik nama lengkap..." 
+                    class="bg-white border border-slate-200 rounded-2xl px-6 py-4 w-full focus:ring-4 focus:ring-teal-100 outline-none text-md shadow-sm mb-8">
+                <div id="gen-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
+            </div>
+        </section>
+    </div>
+
+    <div id="qr-hidden" class="hidden"></div>
+
+    <script>
+        // --- SCRIPT LOGIC (Sama seperti sebelumnya, hanya update UI) ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwaK9ggF66gcI2aTuA3SeY7mf9x1VOVR8WTTnlFBtu6hhS90iPXgs8j_Sf9jAEwPWcEQg/exec"; 
+        let participants = [];
+        let html5QrCode;
+
+        async function loadData() {
+            setSyncStatus("Connecting...", "bg-amber-400");
+            try {
+                const res = await fetch(SCRIPT_URL);
+                participants = await res.json();
+                renderList(); updateStats();
+                setSyncStatus("Cloud Synced", "bg-emerald-500");
+            } catch (e) { setSyncStatus("Offline", "bg-red-400"); }
+        }
+
+        function renderList() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const body = document.getElementById('list-body');
+            body.innerHTML = "";
+            participants.filter(p => (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query)).forEach(p => {
+                const isHadir = p.STATUS === "HADIR";
+                body.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-all">
+                        <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || ""}</td>
+                        <td class="p-5 font-bold text-navy">${p.NAMA || ""}</td>
+                        <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN || ""}</td>
+                        <td class="p-5 text-center">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
+                                ${isHadir ? '✓ HADIR' : 'PENDING'}
+                            </span>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function renderGenerator() {
+            const query = document.getElementById('searchGen').value.toLowerCase();
+            const grid = document.getElementById('gen-grid');
+            grid.innerHTML = "";
+            if (query.length < 2) return;
+
+            participants.filter(p => (p.NAMA || "").toLowerCase().includes(query)).forEach(p => {
+                const card = document.createElement('div');
+                card.className = "flex flex-col items-center";
+                card.innerHTML = `
+                    <div class="w-full aspect-[3/4] bg-[#0a1d37] rounded-3xl p-6 text-white flex flex-col items-center justify-between text-center shadow-2xl mb-4 relative overflow-hidden border-2 border-[#b39a6a]">
+                        <div class="absolute top-0 left-0 w-full h-1.5 bg-[#b39a6a]"></div>
+                        <p class="text-[8px] tracking-[0.3em] uppercase text-teal-400 font-bold">Muslimpreneur Talk</p>
+                                                <p class="text-[8px] tracking-[0.3em] uppercase text-teal-300 font-bold">My World, My Business, My Life, My Destiny</p>
+                        <div id="preview-qr-${p["NO."]}" class="bg-white p-2 rounded-2xl shadow-lg w-32 h-32 mx-auto"></div>
+                        <div>
+                            <p class="text-sm font-black uppercase text-white leading-tight">${p.NAMA}</p>
+                            <p class="text-[9px] text-slate-400 uppercase mt-1 tracking-widest">${p.KECAMATAN}</p>
+                        </div>
+                        <div class="text-[7px] text-slate-200 uppercase italic">15 Feb 2026 - President Executive Club</div>
+                    </div>
+                    <button onclick='generateAndDownloadTicket(${JSON.stringify(p)})' class="w-full py-3 btn-gold text-[10px] font-black rounded-xl uppercase tracking-widest">Download PNG</button>
+                `;
+                grid.appendChild(card);
+                new QRCode(document.getElementById(`preview-qr-${p["NO."]}`), { text: String(p["NO."]), width: 128, height: 128 });
+            });
+        }
+
+        // --- Fungsi Download & Sync Tetap Sama ---
+        async function generateAndDownloadTicket(p) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 800; canvas.height = 1200;
+            ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
+            ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
+            
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
+            ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('My World, My Business, My Life, My Destiny', 400, 180);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
+
+            const qrContainer = document.getElementById('qr-hidden');
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, { text: String(p["NO."]), width: 380, height: 380 });
+
+            setTimeout(() => {
+                const qrImg = qrContainer.querySelector('img');
+                ctx.drawImage(qrImg, 210, 330, 380, 380);
+                ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
+                ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
+                ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('15 FEBRUARI 2026 | PRESIDENT EXECUTIVE CLUB', 400, 1100);
+
+                const link = document.createElement('a');
+                link.download = `Ticket-MT-${p.NAMA}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            }, 200);
+        }
+
+        async function markAttendance(id) {
+            const index = participants.findIndex(p => p["NO."] == id);
+            if (index === -1 || participants[index].STATUS === "HADIR") return;
+            const person = participants[index];
+            person.STATUS = "HADIR";
+            person.WAKTU = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
+            setSyncStatus("Processing...", "bg-blue-500");
+            addToRecent(person); renderList(); updateStats();
+            try {
+                await fetch(SCRIPT_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ id: id }) });
+                setSyncStatus("Synced", "bg-emerald-500");
+            } catch (e) { setSyncStatus("Sync Error", "bg-red-400"); }
+        }
+
+        function addToRecent(person) {
+            const container = document.getElementById('recent-scans');
+            if (container.querySelector('div.italic')) container.innerHTML = "";
+            const el = document.createElement('div');
+            el.className = "glass p-4 flex justify-between items-center bg-white border-l-4 border-teal-500 shadow-sm";
+            el.innerHTML = `<div><p class="font-bold text-navy">${person.NAMA}</p><p class="text-[10px] text-teal-700 font-bold uppercase">${person.KECAMATAN}</p></div><div class="text-right text-[10px] font-black text-slate-400 uppercase">${person.WAKTU}</div>`;
+            container.prepend(el);
+        }
+
+        function updateStats() {
+            document.getElementById('count-all').innerText = participants.length;
+            document.getElementById('count-hadir').innerText = participants.filter(p => p.STATUS === "HADIR").length;
+        }
+
+        function setSyncStatus(text, color) {
+            document.getElementById('status-text').innerText = text;
+            document.getElementById('indicator').className = `w-2 h-2 rounded-full ${color}`;
+        }
+
+        function switchTab(type, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active-tab'); b.classList.add('text-slate-500'); });
+            document.getElementById(`tab-${type}`).classList.add('active');
+            btn.classList.add('active-tab');
+            if (type === 'scan') {
+                if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+                html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: 250 }, (txt) => markAttendance(txt.trim())).catch(()=>{});
+            } else if (html5QrCode) { html5QrCode.stop(); }
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
