@@ -147,32 +147,83 @@
         }
 
         function renderList() {
-            const query = document.getElementById('search').value.toLowerCase();
-            const body = document.getElementById('list-body');
-            body.innerHTML = "";
-            
-            participants.filter(p => {
-                const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
-                let matchFilter = true;
-                if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
-                if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
-                return matchSearch && matchFilter;
-            }).forEach(p => {
-                const isHadir = p.STATUS === "HADIR";
-                body.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition-all">
-                        <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || ""}</td>
-                        <td class="p-5 font-bold text-navy uppercase text-[11px]">${p.NAMA || ""}</td>
-                        <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN || ""}</td>
-                        <td class="p-5 font-mono text-[10px] text-slate-500">${p.WAKTU || "-"}</td>
-                        <td class="p-5 text-center">
-                            <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
-                                ${isHadir ? '✓ HADIR' : 'PENDING'}
-                            </span>
-                        </td>
-                    </tr>`;
-            });
+    const query = document.getElementById('search').value.toLowerCase();
+    const body = document.getElementById('list-body');
+    body.innerHTML = "";
+    
+    participants.filter(p => {
+        const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
+        let matchFilter = true;
+        if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
+        if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
+        return matchSearch && matchFilter;
+    }).forEach(p => {
+        const isHadir = p.STATUS === "HADIR";
+        
+        // --- PROSES CUCI WAKTU DISINI ---
+        let displayWaktu = "-";
+        if (p.WAKTU && p.WAKTU !== "-") {
+            try {
+                const dateObj = new Date(p.WAKTU);
+                // Cek apakah date valid
+                if (!isNaN(dateObj)) {
+                    displayWaktu = dateObj.toLocaleString('id-ID', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }).replace(/\./g, ':'); // Ganti titik jadi titik dua (khas Indonesia)
+                } else {
+                    displayWaktu = p.WAKTU; // Balikin asal kalau bukan format tanggal
+                }
+            } catch (e) {
+                displayWaktu = p.WAKTU;
+            }
         }
+        // --------------------------------
+
+        body.innerHTML += `
+            <tr class="hover:bg-slate-50 transition-all">
+                <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || ""}</td>
+                <td class="p-5 font-bold text-navy uppercase text-[11px]">${p.NAMA || ""}</td>
+                <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN || ""}</td>
+                <td class="p-5 font-mono text-[10px] text-slate-500">${displayWaktu}</td>
+                <td class="p-5 text-center">
+                    <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
+                        ${isHadir ? '✓ HADIR' : 'PENDING'}
+                    </span>
+                </td>
+            </tr>`;
+    });
+}
+
+        // function renderList() {
+        //     const query = document.getElementById('search').value.toLowerCase();
+        //     const body = document.getElementById('list-body');
+        //     body.innerHTML = "";
+            
+        //     participants.filter(p => {
+        //         const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
+        //         let matchFilter = true;
+        //         if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
+        //         if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
+        //         return matchSearch && matchFilter;
+        //     }).forEach(p => {
+        //         const isHadir = p.STATUS === "HADIR";
+        //         body.innerHTML += `
+        //             <tr class="hover:bg-slate-50 transition-all">
+        //                 <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || ""}</td>
+        //                 <td class="p-5 font-bold text-navy uppercase text-[11px]">${p.NAMA || ""}</td>
+        //                 <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN || ""}</td>
+        //                 <td class="p-5 font-mono text-[10px] text-slate-500">${p.WAKTU || "-"}</td>
+        //                 <td class="p-5 text-center">
+        //                     <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
+        //                         ${isHadir ? '✓ HADIR' : 'PENDING'}
+        //                     </span>
+        //                 </td>
+        //             </tr>`;
+        //     });
+        // }
 
         async function markAttendance(id) {
             const index = participants.findIndex(p => p["NO."] == id);
