@@ -393,32 +393,84 @@
             });
         }
 
+        // async function generateAndDownloadTicket(p) {
+        //     const canvas = document.createElement('canvas');
+        //     const ctx = canvas.getContext('2d');
+        //     canvas.width = 800; canvas.height = 1200;
+        //     ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
+        //     ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
+        //     ctx.textAlign = 'center';
+        //     ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
+        //     ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('My World, My Business, My Life, My Destiny', 400, 180);
+        //     ctx.fillStyle = '#ffffff';
+        //     ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
+        //     const qrContainer = document.getElementById('qr-hidden');
+        //     qrContainer.innerHTML = "";
+        //     new QRCode(qrContainer, { text: String(p["NO."]), width: 380, height: 380 });
+        //     setTimeout(() => {
+        //         const qrImg = qrContainer.querySelector('img');
+        //         ctx.drawImage(qrImg, 210, 330, 380, 380);
+        //         ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
+        //         ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
+        //         ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('15 FEBRUARI 2026 | PRESIDENT EXECUTIVE CLUB', 400, 1100);
+        //         const link = document.createElement('a');
+        //         link.download = `Ticket-MT-${p.NAMA}.png`;
+        //         link.href = canvas.toDataURL("image/png");
+        //         link.click();
+        //     }, 200);
+        // }
+
         async function generateAndDownloadTicket(p) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 800; canvas.height = 1200;
-            ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
-            ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
-            ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('My World, My Business, My Life, My Destiny', 400, 180);
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
-            const qrContainer = document.getElementById('qr-hidden');
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, { text: String(p["NO."]), width: 380, height: 380 });
-            setTimeout(() => {
-                const qrImg = qrContainer.querySelector('img');
-                ctx.drawImage(qrImg, 210, 330, 380, 380);
-                ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
-                ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
-                ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('15 FEBRUARI 2026 | PRESIDENT EXECUTIVE CLUB', 400, 1100);
-                const link = document.createElement('a');
-                link.download = `Ticket-MT-${p.NAMA}.png`;
-                link.href = canvas.toDataURL("image/png");
-                link.click();
-            }, 200);
-        }
+    // 1. Ambil nomor registrasi & tambahin 000 di depannya (misal jadi 0005)
+    const rawNo = p.NO_REGISTRASI || p["NO REGISTRASI"] || p["NO."];
+    const formattedNo = String(rawNo).padStart(5, '0'); 
+    const ticketText = `tiket no : ${formattedNo}`;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 800; canvas.height = 1200;
+
+    // Background & Header
+    ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
+    ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
+    ctx.textAlign = 'center';
+
+    // Title
+    ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
+    ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('ANALISIS SWOT, UNTUK BISNIS BERKAH DUNIA AKHIRAT', 400, 180);
+
+    // --- TAMBAHAN TEKS TIKET NO DI ATAS QR ---
+    ctx.fillStyle = '#b39a6a'; // Warna gold biar cakep
+    ctx.font = 'bold 35px Courier New'; // Pake font monospace biar kesan nomor tiket
+    ctx.fillText(ticketText, 400, 270); 
+    // ----------------------------------------
+
+    // Box Putih buat QR
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
+
+    const qrContainer = document.getElementById('qr-hidden');
+    qrContainer.innerHTML = "";
+    
+    // QR Code diisi nomor asli biar scanner tetep bisa baca
+    new QRCode(qrContainer, { text: String(rawNo), width: 380, height: 380 });
+
+    setTimeout(() => {
+        const qrImg = qrContainer.querySelector('img');
+        ctx.drawImage(qrImg, 210, 330, 380, 380);
+
+        // Nama & Detail Peserta
+        ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
+        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
+        ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('28 FEBRUARI 2026 | Aula Masjid Al Azhar Jababeka', 400, 1100);
+
+        // Download Action
+        const link = document.createElement('a');
+        link.download = `Ticket-${formattedNo}-${p.NAMA}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    }, 200);
+}
 
         loadData();
     </script>
