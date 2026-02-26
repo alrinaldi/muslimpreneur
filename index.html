@@ -7,6 +7,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         :root { --navy: #0a1d37; --teal: #1a5f60; --gold: #b39a6a; }
@@ -21,7 +22,7 @@
     </style>
 </head>
 <body class="p-4 md:p-8">
-
+<audio id="beep-sound" src="correct.mp3" preload="auto"></audio>
     <div class="max-w-6xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
             <div class="text-center md:text-left">
@@ -227,27 +228,112 @@
         //     });
         // }
 
-        async function markAttendance(id) {
-            const index = participants.findIndex(p => p["NO."] == id);
-            if (index === -1 || participants[index].STATUS === "HADIR") return;
+        // async function markAttendance(id) {
+        //     const index = participants.findIndex(p => p["NO."] == id);
+        //     if (index === -1 || participants[index].STATUS === "HADIR") return;
             
-            const now = new Date();
-            const fullDateTime = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        //     const now = new Date();
+        //     const fullDateTime = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
             
-            const person = participants[index];
-            person.STATUS = "HADIR";
-            person.WAKTU = fullDateTime;
+        //     const person = participants[index];
+        //     person.STATUS = "HADIR";
+        //     person.WAKTU = fullDateTime;
             
-            setSyncStatus("Processing...", "bg-blue-500");
-            addToRecent(person); // Fungsi ini yang tadi ilang
-            renderList(); 
-            updateStats();
+        //     setSyncStatus("Processing...", "bg-blue-500");
+        //     addToRecent(person); // Fungsi ini yang tadi ilang
+        //     renderList(); 
+        //     updateStats();
 
-            try {
-                await fetch(SCRIPT_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ id: id }) });
-                setSyncStatus("Synced", "bg-emerald-500");
-            } catch (e) { setSyncStatus("Sync Error", "bg-red-400"); }
-        }
+        //     try {
+        //         await fetch(SCRIPT_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ id: id }) });
+        //         setSyncStatus("Synced", "bg-emerald-500");
+        //     } catch (e) { setSyncStatus("Sync Error", "bg-red-400"); }
+        // }
+
+ async function markAttendance(id) {
+    const beep = document.getElementById("beep-sound");
+    
+    // 1. Cari pesertanya dulu
+    const index = participants.findIndex(p => 
+        String(p["NO."]) === String(id) || 
+        String(p.NO_REGISTRASI) === String(id) || 
+        String(p["NO REGISTRASI"]) === String(id)
+    );
+
+    // VALIDASI: DATA TIDAK ADA
+    if (index === -1) {
+        Swal.fire({ icon: 'error', title: 'TIDAK TERDAFTAR', text: `ID ${id} tidak ada!` });
+        return;
+    }
+
+    const person = participants[index];
+
+    // VALIDASI: SUDAH HADIR
+    if (person.STATUS === "HADIR") {
+        Swal.fire({ 
+            icon: 'warning', 
+            title: 'SUDAH MASUK', 
+            text: `${person.NAMA} sudah check-in sebelumnya.` 
+        });
+        return;
+    }
+
+    // --- MULAI PROSES UPDATE ---
+    setSyncStatus("Updating Sheet...", "bg-blue-500");
+
+    // Munculin Loading (Biar panitia gak klik-klik lagi pas nunggu internet)
+    Swal.fire({
+        title: 'Memproses...',
+        text: 'Sedang mencatat ke database Google',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading() }
+    });
+
+    try {
+        // KIRIM KE SPREADSHEET
+        await fetch(SCRIPT_URL, { 
+            method: "POST", 
+            mode: 'no-cors', 
+            body: JSON.stringify({ id: id }) 
+        });
+
+        // --- BERHASIL UPDATE KE SHEET ---
+        
+        // 1. Bunyiin Suara
+        if (beep) { beep.currentTime = 0; beep.play(); }
+
+        // 2. Update Data Lokal
+        const now = new Date();
+        const fullDateTime = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        person.STATUS = "HADIR";
+        person.WAKTU = fullDateTime;
+        
+        // 3. Update UI
+        addToRecent(person);
+        renderList(); 
+        updateStats();
+        setSyncStatus("Synced", "bg-emerald-500");
+
+        // 4. Tutup loading dan ganti jadi Sukses
+        Swal.fire({
+            icon: 'success',
+            title: 'DATABASE UPDATED!',
+            text: `Selamat Datang, ${person.NAMA}`,
+            timer: 1500,
+            showConfirmButton: false
+        });
+
+    } catch (e) {
+        // KALO GAGAL (Koneksi Mati/Server Down)
+        setSyncStatus("Sync Error", "bg-red-400");
+        Swal.fire({
+            icon: 'error',
+            title: 'GAGAL KONEKSI',
+            text: 'Gagal update ke Google Sheets. Cek internet',
+        });
+    }
+}
 
         function addToRecent(person) {
             const container = document.getElementById('recent-scans');
