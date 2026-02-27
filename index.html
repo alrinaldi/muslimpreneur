@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Muslimpreneur Talk | Event Dashboard</title>
+    <title>Muslimpreneur Talk | Ultra Dashboard</title>
+    
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         :root { --navy: #0a1d37; --teal: #1a5f60; --gold: #b39a6a; }
@@ -22,7 +26,9 @@
     </style>
 </head>
 <body class="p-4 md:p-8">
-<audio id="beep-sound" src="correct.mp3" preload="auto"></audio>
+
+    <audio id="beep-sound" src="correct.mp3" preload="auto"></audio>
+
     <div class="max-w-6xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-10 gap-6">
             <div class="text-center md:text-left">
@@ -47,24 +53,20 @@
                 <div class="lg:col-span-1 space-y-4">
                     <div class="glass overflow-hidden">
                         <img src="poster.jpeg" alt="Poster Event" class="w-full h-auto object-cover">
-                        <div class="p-4 bg-navy text-white text-center" style="background: var(--navy);">
-                            <p class="text-[10px] font-bold tracking-widest uppercase opacity-70">Lokasi Event</p>
-                            <p class="text-xs font-bold">President Executive Club</p>
-                            <p class="text-[10px] mt-1 text-blue-300">Ahad, 15 Februari 2026</p>
+                        <div class="p-4 bg-navy text-white text-center">
+                            <p class="text-[10px] font-bold tracking-widest uppercase opacity-70">Event Date</p>
+                            <p class="text-xs font-bold italic text-blue-300">Ahad, 15 Februari 2026</p>
                         </div>
                     </div>
-                    
-                    <div onclick="setFilter('ALL')" class="glass p-6 border-l-4 border-slate-600 cursor-pointer hover:bg-white transition-all active:scale-95">
+                    <div onclick="setFilter('ALL')" class="glass p-6 border-l-4 border-slate-600 cursor-pointer hover:bg-white transition-all">
                         <p class="text-slate-500 text-[10px] font-bold uppercase mb-1">Total Peserta</p>
                         <h2 id="count-all" class="text-4xl font-black text-slate-800 tracking-tighter">0</h2>
                     </div>
-                    
-                    <div onclick="setFilter('HADIR')" class="glass p-6 border-l-4 border-amber-500 cursor-pointer hover:bg-white transition-all active:scale-95">
-                        <p class="text-amber-600 text-[10px] font-bold uppercase mb-1">Sudah Hadir</p>
-                        <h2 id="count-hadir" class="text-4xl font-black text-amber-600 tracking-tighter">0</h2>
+                    <div onclick="setFilter('HADIR')" class="glass p-6 border-l-4 border-emerald-500 cursor-pointer hover:bg-white transition-all">
+                        <p class="text-emerald-600 text-[10px] font-bold uppercase mb-1">Sudah Hadir</p>
+                        <h2 id="count-hadir" class="text-4xl font-black text-emerald-600 tracking-tighter">0</h2>
                     </div>
-
-                    <div onclick="setFilter('PENDING')" class="glass p-6 border-l-4 border-rose-500 cursor-pointer hover:bg-white transition-all active:scale-95">
+                    <div onclick="setFilter('PENDING')" class="glass p-6 border-l-4 border-rose-500 cursor-pointer hover:bg-white transition-all">
                         <p class="text-rose-600 text-[10px] font-bold uppercase mb-1">Belum Hadir</p>
                         <h2 id="count-pending" class="text-4xl font-black text-rose-600 tracking-tighter">0</h2>
                     </div>
@@ -72,9 +74,9 @@
 
                 <div class="lg:col-span-3">
                     <div class="glass overflow-hidden bg-white/90">
-                        <div class="p-4 border-b border-slate-100">
+                        <div class="p-4 border-b border-slate-100 flex gap-4">
                             <input type="text" id="search" onkeyup="renderList()" placeholder="Cari nama atau kecamatan..." 
-                                class="bg-slate-50 border border-slate-200 rounded-xl px-6 py-3 w-full outline-none text-sm focus:ring-2 focus:ring-teal-500/20">
+                                class="bg-slate-50 border border-slate-200 rounded-xl px-6 py-3 w-full outline-none text-sm">
                         </div>
                         <div class="overflow-y-auto max-h-[60vh]">
                             <table class="w-full text-left">
@@ -83,7 +85,7 @@
                                         <th class="p-5">ID</th>
                                         <th class="p-5">Nama Peserta</th>
                                         <th class="p-5">Kecamatan</th>
-                                        <th class="p-5">Waktu Check-in</th>
+                                        <th class="p-5">Waktu</th>
                                         <th class="p-5 text-center">Status</th>
                                     </tr>
                                 </thead>
@@ -101,9 +103,9 @@
                     <div id="reader" class="rounded-2xl overflow-hidden border-4 border-slate-100 bg-slate-50 aspect-square"></div>
                 </div>
                 <div class="flex flex-col gap-4">
-                    <h3 class="px-2 font-black text-navy text-sm uppercase tracking-widest">Check-in Log</h3>
+                    <h3 class="px-2 font-black text-navy text-sm uppercase tracking-widest">Live Check-in Log</h3>
                     <div id="recent-scans" class="space-y-3">
-                        <div class="glass p-10 text-center text-slate-400 italic text-sm">Menunggu scan pertama...</div>
+                        <div class="glass p-10 text-center text-slate-400 italic text-sm">Scan QR Tiket untuk memulai...</div>
                     </div>
                 </div>
             </div>
@@ -111,12 +113,18 @@
 
         <section id="tab-gen" class="tab-content">
             <div class="glass p-8 bg-white/90">
-                <div class="mb-8">
-                    <h3 class="font-black text-navy text-2xl uppercase">E-Ticket Generator</h3>
-                    <p class="text-sm text-slate-500">Cari nama untuk download tiket resmi Muslimpreneur Talk.</p>
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <div>
+                        <h3 class="font-black text-navy text-2xl uppercase">E-Ticket Manager</h3>
+                        <p class="text-sm text-slate-500">Kelola tiket massal (Print atau ZIP).</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="printSeluruhTiket()" class="px-4 py-3 bg-slate-800 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:scale-105 transition-all">🖨️ Print Semua</button>
+                        <button onclick="downloadSemuaTiketZIP()" class="px-4 py-3 bg-blue-600 text-white rounded-xl font-bold text-[10px] uppercase shadow-lg hover:scale-105 transition-all">📦 Download ZIP</button>
+                    </div>
                 </div>
-                <input type="text" id="searchGen" onkeyup="renderGenerator()" placeholder="Ketik nama lengkap..." 
-                    class="bg-white border border-slate-200 rounded-2xl px-6 py-4 w-full focus:ring-4 focus:ring-teal-100 outline-none text-md shadow-sm mb-8">
+                <input type="text" id="searchGen" onkeyup="renderGenerator()" placeholder="Ketik nama untuk cari tiket individu..." 
+                    class="bg-white border border-slate-200 rounded-2xl px-6 py-4 w-full focus:ring-4 focus:ring-teal-100 outline-none mb-8">
                 <div id="gen-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
             </div>
         </section>
@@ -126,7 +134,6 @@
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzofsQwtuM4L0SVsNJdxOw7_otzCLKgPHXKkjLY_n1RpvB8trvDWRfYqMoS_VzBYlW9Zg/exec"; 
-        
         let participants = [];
         let html5QrCode;
         let currentFilter = "ALL";
@@ -136,213 +143,14 @@
             try {
                 const res = await fetch(SCRIPT_URL);
                 participants = await res.json();
-                renderList(); 
-                updateStats();
-                setSyncStatus("Cloud Synced", "bg-emerald-500");
+                renderList(); updateStats();
+                setSyncStatus("Connected", "bg-emerald-500");
             } catch (e) { setSyncStatus("Offline", "bg-red-400"); }
         }
 
-        function setFilter(status) {
-            currentFilter = status;
-            renderList();
-        }
-
-        function renderList() {
-    const query = document.getElementById('search').value.toLowerCase();
-    const body = document.getElementById('list-body');
-    body.innerHTML = "";
-    
-    participants.filter(p => {
-        const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
-        let matchFilter = true;
-        if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
-        if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
-        return matchSearch && matchFilter;
-    }).forEach(p => {
-        const isHadir = p.STATUS === "HADIR";
-        
-        // --- PROSES CUCI WAKTU DISINI ---
-        let displayWaktu = "-";
-        if (p.WAKTU && p.WAKTU !== "-") {
-            try {
-                const dateObj = new Date(p.WAKTU);
-                // Cek apakah date valid
-                if (!isNaN(dateObj)) {
-                    displayWaktu = dateObj.toLocaleString('id-ID', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year:'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: false // Biar format 24 jam (misal 13:00 bukan 01:00 PM)
-                    }).replace(/\./g, ':'); // Ganti titik jadi titik dua (khas Indonesia)
-                } else {
-                    displayWaktu = p.WAKTU; // Balikin asal kalau bukan format tanggal
-                }
-            } catch (e) {
-                displayWaktu = p.WAKTU;
-            }
-        }
-        // --------------------------------
-
-        body.innerHTML += `
-            <tr class="hover:bg-slate-50 transition-all">
-                <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || ""}</td>
-                <td class="p-5 font-bold text-navy uppercase text-[11px]">${p.NAMA || ""}</td>
-                <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN || ""}</td>
-                <td class="p-5 font-mono text-[10px] text-slate-500">${displayWaktu}</td>
-                <td class="p-5 text-center">
-                    <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
-                        ${isHadir ? '✓ HADIR' : 'PENDING'}
-                    </span>
-                </td>
-            </tr>`;
-    });
-}
-
-        // function renderList() {
-        //     const query = document.getElementById('search').value.toLowerCase();
-        //     const body = document.getElementById('list-body');
-        //     body.innerHTML = "";
-            
-        //     participants.filter(p => {
-        //         const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
-        //         let matchFilter = true;
-        //         if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
-        //         if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
-        //         return matchSearch && matchFilter;
-        //     }).forEach(p => {
-        //         const isHadir = p.STATUS === "HADIR";
-        //         body.innerHTML += `
-        //             <tr class="hover:bg-slate-50 transition-all">
-        //                 <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || ""}</td>
-        //                 <td class="p-5 font-bold text-navy uppercase text-[11px]">${p.NAMA || ""}</td>
-        //                 <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN || ""}</td>
-        //                 <td class="p-5 font-mono text-[10px] text-slate-500">${p.WAKTU || "-"}</td>
-        //                 <td class="p-5 text-center">
-        //                     <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
-        //                         ${isHadir ? '✓ HADIR' : 'PENDING'}
-        //                     </span>
-        //                 </td>
-        //             </tr>`;
-        //     });
-        // }
-
-        // async function markAttendance(id) {
-        //     const index = participants.findIndex(p => p["NO."] == id);
-        //     if (index === -1 || participants[index].STATUS === "HADIR") return;
-            
-        //     const now = new Date();
-        //     const fullDateTime = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            
-        //     const person = participants[index];
-        //     person.STATUS = "HADIR";
-        //     person.WAKTU = fullDateTime;
-            
-        //     setSyncStatus("Processing...", "bg-blue-500");
-        //     addToRecent(person); // Fungsi ini yang tadi ilang
-        //     renderList(); 
-        //     updateStats();
-
-        //     try {
-        //         await fetch(SCRIPT_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ id: id }) });
-        //         setSyncStatus("Synced", "bg-emerald-500");
-        //     } catch (e) { setSyncStatus("Sync Error", "bg-red-400"); }
-        // }
-
- async function markAttendance(id) {
-    const beep = document.getElementById("beep-sound");
-    
-    // 1. Cari pesertanya dulu
-    const index = participants.findIndex(p => 
-        String(p["NO."]) === String(id) || 
-        String(p.NO_REGISTRASI) === String(id) || 
-        String(p["NO REGISTRASI"]) === String(id)
-    );
-
-    // VALIDASI: DATA TIDAK ADA
-    if (index === -1) {
-        Swal.fire({ icon: 'error', title: 'TIDAK TERDAFTAR', text: `ID ${id} tidak ada!` });
-        return;
-    }
-
-    const person = participants[index];
-
-    // VALIDASI: SUDAH HADIR
-    if (person.STATUS === "HADIR") {
-        Swal.fire({ 
-            icon: 'warning', 
-            title: 'SUDAH MASUK', 
-            text: `${person.NAMA} sudah check-in sebelumnya.` 
-        });
-        return;
-    }
-
-    // --- MULAI PROSES UPDATE ---
-    setSyncStatus("Updating Sheet...", "bg-blue-500");
-
-    // Munculin Loading (Biar panitia gak klik-klik lagi pas nunggu internet)
-    Swal.fire({
-        title: 'Memproses...',
-        text: 'Sedang mencatat ke database Google',
-        allowOutsideClick: false,
-        didOpen: () => { Swal.showLoading() }
-    });
-
-    try {
-        // KIRIM KE SPREADSHEET
-        await fetch(SCRIPT_URL, { 
-            method: "POST", 
-            mode: 'no-cors', 
-            body: JSON.stringify({ id: id }) 
-        });
-
-        // --- BERHASIL UPDATE KE SHEET ---
-        
-        // 1. Bunyiin Suara
-        if (beep) { beep.currentTime = 0; beep.play(); }
-
-        // 2. Update Data Lokal
-        const now = new Date();
-        const fullDateTime = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-        
-        person.STATUS = "HADIR";
-        person.WAKTU = fullDateTime;
-        
-        // 3. Update UI
-        addToRecent(person);
-        renderList(); 
-        updateStats();
-        setSyncStatus("Synced", "bg-emerald-500");
-
-        // 4. Tutup loading dan ganti jadi Sukses
-        Swal.fire({
-            icon: 'success',
-            title: 'DATABASE UPDATED!',
-            text: `Selamat Datang, ${person.NAMA}`,
-            timer: 1500,
-            showConfirmButton: false
-        });
-
-    } catch (e) {
-        // KALO GAGAL (Koneksi Mati/Server Down)
-        setSyncStatus("Sync Error", "bg-red-400");
-        Swal.fire({
-            icon: 'error',
-            title: 'GAGAL KONEKSI',
-            text: 'Gagal update ke Google Sheets. Cek internet',
-        });
-    }
-}
-
-        function addToRecent(person) {
-            const container = document.getElementById('recent-scans');
-            if (container.querySelector('div.italic')) container.innerHTML = "";
-            const el = document.createElement('div');
-            el.className = "glass p-4 flex justify-between items-center bg-white border-l-4 border-teal-500 shadow-sm animate-pulse";
-            el.innerHTML = `<div><p class="font-bold text-navy uppercase text-xs">${person.NAMA}</p><p class="text-[9px] text-teal-700 font-bold uppercase">${person.KECAMATAN}</p></div><div class="text-right text-[10px] font-black text-slate-400 uppercase">${person.WAKTU}</div>`;
-            container.prepend(el);
-            setTimeout(() => el.classList.remove('animate-pulse'), 1000);
+        function setSyncStatus(text, color) {
+            document.getElementById('status-text').innerText = text;
+            document.getElementById('indicator').className = `w-2 h-2 rounded-full ${color}`;
         }
 
         function updateStats() {
@@ -351,11 +159,6 @@
             document.getElementById('count-all').innerText = total;
             document.getElementById('count-hadir').innerText = hadir;
             document.getElementById('count-pending').innerText = total - hadir;
-        }
-
-        function setSyncStatus(text, color) {
-            document.getElementById('status-text').innerText = text;
-            document.getElementById('indicator').className = `w-2 h-2 rounded-full ${color}`;
         }
 
         function switchTab(type, btn) {
@@ -369,6 +172,155 @@
             } else if (html5QrCode) { html5QrCode.stop().catch(()=>{}); }
         }
 
+        function renderList() {
+            const query = document.getElementById('search').value.toLowerCase();
+            const body = document.getElementById('list-body');
+            body.innerHTML = "";
+            participants.filter(p => {
+                const matchSearch = (p.NAMA || "").toLowerCase().includes(query) || (p.KECAMATAN || "").toLowerCase().includes(query);
+                let matchFilter = true;
+                if (currentFilter === "HADIR") matchFilter = (p.STATUS === "HADIR");
+                if (currentFilter === "PENDING") matchFilter = (p.STATUS !== "HADIR");
+                return matchSearch && matchFilter;
+            }).forEach(p => {
+                const isHadir = p.STATUS === "HADIR";
+                body.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition-all">
+                        <td class="p-5 font-mono text-[10px] text-slate-400">${p["NO."] || p.NO_REGISTRASI}</td>
+                        <td class="p-5 font-bold text-navy uppercase text-[11px]">${p.NAMA}</td>
+                        <td class="p-5 text-slate-500 text-xs">${p.KECAMATAN}</td>
+                        <td class="p-5 font-mono text-[10px] text-slate-500">${p.WAKTU || "-"}</td>
+                        <td class="p-5 text-center">
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black ${isHadir ? 'bg-teal-100 text-teal-700' : 'bg-slate-100 text-slate-400'}">
+                                ${isHadir ? '✓ HADIR' : 'PENDING'}
+                            </span>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function markAttendance(id) {
+            const beep = document.getElementById("beep-sound");
+            const index = participants.findIndex(p => String(p["NO."]) === String(id) || String(p.NO_REGISTRASI) === String(id));
+
+            if (index === -1) {
+                Swal.fire({ icon: 'error', title: 'TIDAK TERDAFTAR', text: `ID ${id} tidak ada di database!` });
+                return;
+            }
+
+            const person = participants[index];
+            if (person.STATUS === "HADIR") {
+                Swal.fire({ icon: 'warning', title: 'SUDAH HADIR', text: `${person.NAMA} sudah check-in.` });
+                return;
+            }
+
+            Swal.fire({ title: 'Menghubungi Cloud...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+            try {
+                await fetch(SCRIPT_URL, { method: "POST", mode: 'no-cors', body: JSON.stringify({ id: id }) });
+                
+                if (beep) beep.play();
+                
+                const now = new Date();
+                const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                person.STATUS = "HADIR";
+                person.WAKTU = timeStr;
+
+                addToRecent(person);
+                renderList(); updateStats();
+                setSyncStatus("Last Sync: " + timeStr, "bg-emerald-500");
+
+                Swal.fire({ icon: 'success', title: 'BERHASIL CHECK-IN', text: `Selamat datang, ${person.NAMA}`, timer: 1500, showConfirmButton: false });
+            } catch (e) {
+                Swal.fire({ icon: 'error', title: 'GAGAL', text: 'Koneksi internet bermasalah' });
+            }
+        }
+
+        function addToRecent(person) {
+            const container = document.getElementById('recent-scans');
+            if (container.querySelector('div.italic')) container.innerHTML = "";
+            const el = document.createElement('div');
+            el.className = "glass p-4 flex justify-between items-center bg-white border-l-4 border-teal-500 animate-bounce";
+            el.innerHTML = `<div><p class="font-bold text-navy uppercase text-xs">${person.NAMA}</p><p class="text-[9px] text-teal-700 uppercase">${person.KECAMATAN}</p></div><div class="text-[10px] font-black text-slate-400">${person.WAKTU}</div>`;
+            container.prepend(el);
+            setTimeout(() => el.classList.remove('animate-bounce'), 1000);
+        }
+
+        // --- CORE TICKET ENGINE ---
+        async function getTicketBase64(p) {
+            return new Promise((resolve) => {
+                const rawNo = p.NO_REGISTRASI || p["NO REGISTRASI"] || p["NO."];
+                const formattedNo = String(rawNo).padStart(5, '0');
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 800; canvas.height = 1200;
+
+                // Background
+                ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
+                ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
+                ctx.textAlign = 'center';
+
+                // Text
+                ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
+                ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('ANALISIS SWOT, BISNIS BERKAH DUNIA AKHIRAT', 400, 180);
+                ctx.fillStyle = '#b39a6a'; ctx.font = 'bold 30px Courier New'; ctx.fillText(`tiket no : ${formattedNo}`, 400, 270);
+                
+                // QR Area
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
+
+                const qrDiv = document.createElement('div');
+                new QRCode(qrDiv, { text: String(rawNo), width: 380, height: 380 });
+                
+                setTimeout(() => {
+                    const qrImg = qrDiv.querySelector('img');
+                    ctx.drawImage(qrImg, 210, 330, 380, 380);
+                    ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
+                    ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
+                    ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('28 FEBRUARI 2026 | Aula Masjid Al Azhar Jababeka', 400, 1100);
+                    resolve(canvas.toDataURL("image/png"));
+                }, 100);
+            });
+        }
+
+        // --- MASS ACTIONS ---
+        async function printSeluruhTiket() {
+            Swal.fire({ title: 'Menyiapkan Render...', text: 'Memuat semua tiket ke jendela print', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Print All</title><style>body{margin:0;display:flex;flex-direction:column;align-items:center} img{width:100%;max-width:600px;page-break-after:always;margin-bottom:20px;}</style></head><body>');
+            for (const p of participants) {
+                const img = await getTicketBase64(p);
+                printWindow.document.write(`<img src="${img}">`);
+            }
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.onload = () => { Swal.close(); printWindow.print(); };
+        }
+
+        async function downloadSemuaTiketZIP() {
+            if (participants.length === 0) return;
+            const confirm = await Swal.fire({ title: 'Bikin ZIP?', text: `Bungkus ${participants.length} tiket ke ZIP?`, icon: 'question', showCancelButton: true });
+            if (!confirm.isConfirmed) return;
+
+            const zip = new JSZip();
+            const folder = zip.folder("Tiket_Muslimpreneur");
+            
+            Swal.fire({ title: 'Memproses ZIP...', html: '<p id="zip-info">Merakit tiket (0%)</p>', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+            for (let i = 0; i < participants.length; i++) {
+                const p = participants[i];
+                const dataUrl = await getTicketBase64(p);
+                const base64Data = dataUrl.replace(/^data:image\/(png|jpg);base64,/, "");
+                const fileName = `${String(p["NO."] || i+1).padStart(5, '0')}-${p.NAMA.replace(/\s+/g, '_')}.png`;
+                folder.file(fileName, base64Data, {base64: true});
+                
+                document.getElementById('zip-info').innerText = `Merakit tiket (${Math.round(((i+1)/participants.length)*100)}%)`;
+            }
+
+            const content = await zip.generateAsync({type: "blob"});
+            saveAs(content, "Semua_Tiket_Muslimpreneur.zip");
+            Swal.fire('Selesai!', 'File ZIP berhasil di-download.', 'success');
+        }
+
         function renderGenerator() {
             const query = document.getElementById('searchGen').value.toLowerCase();
             const grid = document.getElementById('gen-grid');
@@ -376,101 +328,25 @@
             if (query.length < 2) return;
             participants.filter(p => (p.NAMA || "").toLowerCase().includes(query)).forEach(p => {
                 const card = document.createElement('div');
-                card.className = "flex flex-col items-center";
+                card.className = "flex flex-col items-center gap-3";
                 card.innerHTML = `
-                    <div class="w-full aspect-[3/4] bg-[#0a1d37] rounded-3xl p-6 text-white flex flex-col items-center justify-between text-center shadow-2xl mb-4 relative overflow-hidden border-2 border-[#b39a6a]">
-                        <div class="absolute top-0 left-0 w-full h-1.5 bg-[#b39a6a]"></div>
-                        <p class="text-[8px] tracking-[0.3em] uppercase text-teal-400 font-bold">Muslimpreneur Talk</p>
-                        <div id="preview-qr-${p["NO."]}" class="bg-white p-2 rounded-2xl shadow-lg w-32 h-32 mx-auto"></div>
-                        <div>
-                            <p class="text-sm font-black uppercase text-white leading-tight">${p.NAMA}</p>
-                            <p class="text-[9px] text-slate-400 uppercase mt-1 tracking-widest">${p.KECAMATAN}</p>
-                        </div>
+                    <div class="w-full bg-[#0a1d37] rounded-3xl p-6 text-white text-center shadow-xl border-2 border-[#b39a6a]">
+                        <p class="text-[10px] font-black uppercase mb-4 text-teal-400">${p.NAMA}</p>
+                        <div id="preview-qr-${p["NO."] || p.NO_REGISTRASI}" class="bg-white p-2 rounded-xl w-32 h-32 mx-auto mb-2"></div>
                     </div>
-                    <button onclick='generateAndDownloadTicket(${JSON.stringify(p)})' class="w-full py-3 btn-gold text-[10px] font-black rounded-xl uppercase tracking-widest">Download PNG</button>`;
+                    <button onclick='generateAndDownloadTicketIndividual(${JSON.stringify(p)})' class="w-full py-2 btn-gold text-[10px] font-black rounded-xl uppercase">Download PNG</button>`;
                 grid.appendChild(card);
-                new QRCode(document.getElementById(`preview-qr-${p["NO."]}`), { text: String(p["NO."]), width: 128, height: 128 });
+                new QRCode(document.getElementById(`preview-qr-${p["NO."] || p.NO_REGISTRASI}`), { text: String(p["NO."] || p.NO_REGISTRASI), width: 128, height: 128 });
             });
         }
 
-        // async function generateAndDownloadTicket(p) {
-        //     const canvas = document.createElement('canvas');
-        //     const ctx = canvas.getContext('2d');
-        //     canvas.width = 800; canvas.height = 1200;
-        //     ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
-        //     ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
-        //     ctx.textAlign = 'center';
-        //     ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
-        //     ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('My World, My Business, My Life, My Destiny', 400, 180);
-        //     ctx.fillStyle = '#ffffff';
-        //     ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
-        //     const qrContainer = document.getElementById('qr-hidden');
-        //     qrContainer.innerHTML = "";
-        //     new QRCode(qrContainer, { text: String(p["NO."]), width: 380, height: 380 });
-        //     setTimeout(() => {
-        //         const qrImg = qrContainer.querySelector('img');
-        //         ctx.drawImage(qrImg, 210, 330, 380, 380);
-        //         ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
-        //         ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
-        //         ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('15 FEBRUARI 2026 | PRESIDENT EXECUTIVE CLUB', 400, 1100);
-        //         const link = document.createElement('a');
-        //         link.download = `Ticket-MT-${p.NAMA}.png`;
-        //         link.href = canvas.toDataURL("image/png");
-        //         link.click();
-        //     }, 200);
-        // }
-
-        async function generateAndDownloadTicket(p) {
-    // 1. Ambil nomor registrasi & tambahin 000 di depannya (misal jadi 0005)
-    const rawNo = p.NO_REGISTRASI || p["NO REGISTRASI"] || p["NO."];
-    const formattedNo = String(rawNo).padStart(5, '0'); 
-    const ticketText = `tiket no : ${formattedNo}`;
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 800; canvas.height = 1200;
-
-    // Background & Header
-    ctx.fillStyle = '#0a1d37'; ctx.fillRect(0, 0, 800, 1200);
-    ctx.fillStyle = '#b39a6a'; ctx.fillRect(0, 0, 800, 20);
-    ctx.textAlign = 'center';
-
-    // Title
-    ctx.fillStyle = '#30dbb9'; ctx.font = 'bold 35px Arial'; ctx.fillText('MUSLIMPRENEUR TALK', 400, 100);
-    ctx.fillStyle = '#ffffff'; ctx.font = '900 25px Arial'; ctx.fillText('ANALISIS SWOT, UNTUK BISNIS BERKAH DUNIA AKHIRAT', 400, 180);
-
-    // --- TAMBAHAN TEKS TIKET NO DI ATAS QR ---
-    ctx.fillStyle = '#b39a6a'; // Warna gold biar cakep
-    ctx.font = 'bold 35px Courier New'; // Pake font monospace biar kesan nomor tiket
-    ctx.fillText(ticketText, 400, 270); 
-    // ----------------------------------------
-
-    // Box Putih buat QR
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath(); ctx.roundRect(180, 300, 440, 440, 50); ctx.fill();
-
-    const qrContainer = document.getElementById('qr-hidden');
-    qrContainer.innerHTML = "";
-    
-    // QR Code diisi nomor asli biar scanner tetep bisa baca
-    new QRCode(qrContainer, { text: String(rawNo), width: 380, height: 380 });
-
-    setTimeout(() => {
-        const qrImg = qrContainer.querySelector('img');
-        ctx.drawImage(qrImg, 210, 330, 380, 380);
-
-        // Nama & Detail Peserta
-        ctx.fillStyle = '#ffffff'; ctx.font = '900 50px Arial'; ctx.fillText(p.NAMA.toUpperCase(), 400, 900);
-        ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 30px Arial'; ctx.fillText(p.KECAMATAN, 400, 960);
-        ctx.fillStyle = '#b39a6a'; ctx.font = 'italic 20px Arial'; ctx.fillText('28 FEBRUARI 2026 | Aula Masjid Al Azhar Jababeka', 400, 1100);
-
-        // Download Action
-        const link = document.createElement('a');
-        link.download = `Ticket-${formattedNo}-${p.NAMA}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-    }, 200);
-}
+        async function generateAndDownloadTicketIndividual(p) {
+            const dataUrl = await getTicketBase64(p);
+            const link = document.createElement('a');
+            link.download = `Ticket-${p.NAMA}.png`;
+            link.href = dataUrl;
+            link.click();
+        }
 
         loadData();
     </script>
